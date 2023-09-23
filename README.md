@@ -21,6 +21,10 @@ The [Humble Fonts Gold](https://somepx.itch.io/humble-fonts-gold) "SinsGold" fon
 
 Simply pull and run `go build` to compile this. Run the resultant EXE file to use it.
 
+## Credits
+
+This is built on https://github.com/tadvi/winc/tree/master
+
 ## License
 
 This project is licensed under the terms of the MIT license.
