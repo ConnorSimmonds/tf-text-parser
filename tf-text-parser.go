@@ -13,6 +13,7 @@ import (
 // Static variables
 var FNT *winc.Font = winc.NewFont("SinsGold", 24, winc.DefaultFont.Style())
 var TXTBOX_IMG string = "assets/spr_dialogue_base.png"
+var BASE_SPEED int = 50
 
 // Global variables
 var dispMsg string = ""
@@ -122,6 +123,18 @@ func parseString(line string) (speakerName string, retLine string, err error) {
 	command := line[:strings.Index(line, " ")]
 	line = line[strings.Index(line, " ")+1:]
 	switch command {
+	case "dia":
+		// get the speaker id
+		speakerId, err := strconv.ParseInt(line[:strings.Index(line, " ")], 10, 32)
+
+		if err != nil {
+			fmt.Println(err)
+			return "", "", errors.New("invalid line")
+		}
+
+		speakerName = getSpeaker(speakerId)
+		line = line[strings.Index(line, " ")+1:]
+		break
 	case "set_pos":
 		fallthrough
 	case "create":
@@ -172,18 +185,6 @@ func parseString(line string) (speakerName string, retLine string, err error) {
 		fallthrough
 	case "to_menu":
 		return "", "", nil
-	case "dia":
-		// get the speaker id
-		speakerId, err := strconv.ParseInt(line[:strings.Index(line, " ")], 10, 32)
-
-		if err != nil {
-			fmt.Println(err)
-			return "", "", errors.New("invalid line")
-		}
-
-		speakerName = getSpeaker(speakerId)
-		line = line[strings.Index(line, " ")+1:]
-		break
 	default:
 		return "", "", errors.New("invalid line")
 	}
@@ -217,7 +218,15 @@ func parseCommand(commandString string) {
 	}
 
 	switch command {
+	case "P":
+		pause, _ := strconv.Atoi(value)
+		time.Sleep(time.Duration((BASE_SPEED/2)*pause) * time.Millisecond)
+	case "S":
+		speedMod, _ := strconv.ParseFloat(value, 10)
+		textSpeed = int((float64(BASE_SPEED)) / speedMod)
+		break
 	default:
 		fmt.Println(command + ":" + value)
+		break
 	}
 }
