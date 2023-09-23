@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -18,9 +19,11 @@ var BASE_SPEED int = 50
 // Global variables
 var dispMsg string = ""
 var setMsg string = ""
-var textSpeed int = 50
+var textSpeed int = 25
+var dialogueFile *os.File
 
 func main() {
+	// Main window
 	mainWindow := winc.NewForm(nil)
 	mainWindow.SetSize(1200, 300)
 	mainWindow.SetText("Text Parser")
@@ -115,6 +118,8 @@ func formatString(line string) (formattedLine string) {
 	return strings.ReplaceAll(line, "#", "\n")
 }
 
+// parseString parses the string, as our line structure is [command] [value..value_n].
+// Ergo, a dialogue line is dia [speakerId] [line]
 func parseString(line string) (speakerName string, retLine string, err error) {
 	if strings.Index(line, " ") == -1 {
 		return "", "", errors.New("invalid line")
@@ -192,6 +197,7 @@ func parseString(line string) (speakerName string, retLine string, err error) {
 	return speakerName, line, nil
 }
 
+// getSpeaker returns the speaker string. Sourced from the game
 func getSpeaker(speakerId int64) string {
 	switch speakerId {
 	case -1:
@@ -209,6 +215,8 @@ func getSpeaker(speakerId int64) string {
 	}
 }
 
+// parseCommand takes in a command and parses it.
+// This is massively truncated from the main one.
 func parseCommand(commandString string) {
 	command := commandString[:strings.Index(commandString, ":")]
 	value := ""
@@ -220,7 +228,7 @@ func parseCommand(commandString string) {
 	switch command {
 	case "P":
 		pause, _ := strconv.Atoi(value)
-		time.Sleep(time.Duration((BASE_SPEED/2)*pause) * time.Millisecond)
+		time.Sleep(time.Duration((int(float64(BASE_SPEED)*0.75))*pause) * time.Millisecond)
 	case "S":
 		speedMod, _ := strconv.ParseFloat(value, 10)
 		textSpeed = int((float64(BASE_SPEED)) / speedMod)
