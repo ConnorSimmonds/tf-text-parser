@@ -1,6 +1,9 @@
 package main
 
 import (
+	"errors"
+	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -54,6 +57,24 @@ func main() {
 		txt.SetText("")
 
 		go func(msg string) {
+			// Parse and display the string
+			// The general structure of most lines is dia x line
+			// Dia is the speaker marker.
+			speaker, msg, err := parseString(msg)
+
+			if err != nil {
+				fmt.Print(err)
+				return
+			}
+
+			// it's a recognized command but not a dialogue command
+			if speaker == "" && msg == "" {
+				return
+			}
+
+			speakerTxt.SetText(speaker)
+
+			// Now go and parse/display the rest of the string
 			tVar := 0
 
 			for tVar < len(msg) {
@@ -80,4 +101,45 @@ func wndOnClose(arg *winc.Event) {
 // GoLang is happy with.
 func formatString(line string) (formattedLine string) {
 	return strings.ReplaceAll(line, "#", "\n")
+}
+
+func parseString(line string) (speakerName string, retLine string, err error) {
+	command := line[:strings.Index(line, " ")]
+	line = line[strings.Index(line, " ")+1:]
+	switch command {
+	case "dia":
+		// get the speaker id
+		speakerId, err := strconv.ParseInt(line[:strings.Index(line, " ")], 10, 32)
+
+		if err != nil {
+			fmt.Print(err)
+			return "", "", errors.New("invalid line")
+		}
+
+		speakerName = getSpeaker(speakerId)
+		line = line[strings.Index(line, " ")+1:]
+		break
+	default:
+		return "", "", errors.New("invalid line")
+	}
+
+	retLine = "world"
+
+	return speakerName, line, nil
+}
+
+func getSpeaker(speakerId int64) string {
+	switch speakerId {
+	case -1:
+	case 0:
+		return ""
+	case 1:
+		return "Eduardo"
+	case 2:
+		return "Violet"
+	case 3:
+		return "'Kat'"
+	default:
+		return "N/A"
+	}
 }
