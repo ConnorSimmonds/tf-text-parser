@@ -22,6 +22,18 @@ var setMsg string = ""
 var textSpeed int = 25
 var dialogueFile *os.File
 
+type Item struct {
+	T       []string
+	checked bool
+}
+
+func (item Item) Text() []string    { return item.T }
+func (item *Item) SetText(s string) { item.T[0] = s }
+
+func (item Item) Checked() bool            { return item.checked }
+func (item *Item) SetChecked(checked bool) { item.checked = checked }
+func (item Item) ImageIndex() int          { return 0 }
+
 func main() {
 	// Main window
 	mainWindow := winc.NewForm(nil)
@@ -101,6 +113,31 @@ func main() {
 
 	})
 
+	// Set up the line list for files
+	lineList := winc.NewListView(mainWindow)
+	lineList.AddColumn("Line", 160)
+	lineList.AddColumn("Index", 60)
+	lineList.SetCheckBoxes(false)
+	lineList.SetPos(820, 0)
+
+	loadBtn := winc.NewPushButton(mainWindow)
+	loadBtn.SetPos(720, 200)
+	loadBtn.SetSize(100, 40)
+	loadBtn.SetText("Load Dialogue File")
+
+	// Dialogue file load logic
+	loadBtn.OnClick().Bind(func(e *winc.Event) {
+		if filePath, ok := winc.ShowOpenFileDlg(mainWindow,
+			"Select a dialogue file", "All files (*.*)|*.*", 0, ""); ok {
+
+			itemList := parseFile(filePath)
+			for _, item := range itemList {
+				lineList.AddItem(item)
+			}
+
+		}
+	})
+
 	mainWindow.Center()
 	mainWindow.Show()
 	mainWindow.OnClose().Bind(wndOnClose)
@@ -111,6 +148,16 @@ func main() {
 func wndOnClose(arg *winc.Event) {
 	winc.Exit()
 }
+
+func parseFile(filePath string) (itemArray []Item) {
+	itemArray = nil
+
+	return itemArray
+}
+
+/*
+	Helper Functions for Parsing Strings
+*/
 
 // formatString will take a string that's meant for GML and parse it into a format that
 // GoLang is happy with.
