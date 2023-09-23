@@ -130,7 +130,7 @@ func main() {
 		if filePath, ok := winc.ShowOpenFileDlg(mainWindow,
 			"Select a dialogue file", "All files (*.*)|*.*", 0, ""); ok {
 
-			itemList := parseFile(filePath)
+			itemList := parseDialogueFile(filePath)
 			for _, item := range itemList {
 				lineList.AddItem(item)
 			}
@@ -149,7 +149,9 @@ func wndOnClose(arg *winc.Event) {
 	winc.Exit()
 }
 
-func parseFile(filePath string) (itemArray []Item) {
+// parseDialogueFile parses in a dialogue file and returns an array of items to be
+// added into the ListView
+func parseDialogueFile(filePath string) (itemArray []Item) {
 	itemArray = nil
 
 	return itemArray
