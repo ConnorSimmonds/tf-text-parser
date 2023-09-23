@@ -17,6 +17,7 @@ var TXTBOX_IMG string = "assets/spr_dialogue_base.png"
 // Global variables
 var dispMsg string = ""
 var setMsg string = ""
+var textSpeed int = 50
 
 func main() {
 	mainWindow := winc.NewForm(nil)
@@ -75,12 +76,22 @@ func main() {
 			speakerTxt.SetText(speaker)
 
 			// Now go and parse/display the rest of the string
-			tVar := 0
+			index := 0
+			textSpeed = 50
 
-			for tVar < len(msg) {
-				txt.SetText(txt.Text() + string(msg[tVar]))
-				time.Sleep(50 * time.Millisecond)
-				tVar += 1
+			for index < len(msg) {
+				if msg[index] == '[' {
+					// start of a command, we need to parse through it and then apply the effects
+					command := msg[index+1 : strings.Index(msg, "]")]
+					parseCommand(command)
+
+					msg = msg[strings.Index(msg, "]")+1:]
+					index = 0
+				}
+
+				txt.SetText(txt.Text() + string(msg[index]))
+				time.Sleep(time.Duration(textSpeed) * time.Millisecond)
+				index += 1
 			}
 		}(dispMsg)
 
@@ -194,5 +205,19 @@ func getSpeaker(speakerId int64) string {
 		return "'Kat'"
 	default:
 		return "N/A"
+	}
+}
+
+func parseCommand(commandString string) {
+	command := commandString[:strings.Index(commandString, ":")]
+	value := ""
+
+	if strings.Index(commandString, ":")+1 != -1 {
+		value = commandString[(strings.Index(commandString, ":") + 1):]
+	}
+
+	switch command {
+	default:
+		fmt.Println(command + ":" + value)
 	}
 }
