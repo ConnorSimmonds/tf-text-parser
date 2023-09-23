@@ -104,15 +104,69 @@ func formatString(line string) (formattedLine string) {
 }
 
 func parseString(line string) (speakerName string, retLine string, err error) {
+	if strings.Index(line, " ") == -1 {
+		return "", "", errors.New("invalid line")
+	}
+
 	command := line[:strings.Index(line, " ")]
 	line = line[strings.Index(line, " ")+1:]
 	switch command {
+	case "set_pos":
+		fallthrough
+	case "create":
+		fallthrough
+	case "em":
+		fallthrough
+	case "music":
+		fallthrough
+	case "move":
+		fallthrough
+	case "del":
+		fallthrough
+	case "name":
+		fallthrough
+	case "speed":
+		fallthrough
+	case "pause":
+		fallthrough
+	case "path":
+		fallthrough
+	case "area_show":
+		fallthrough
+	case "set_zoom":
+		fallthrough
+	case "hide_dia":
+		fallthrough
+	case "focus":
+		fallthrough
+	case "tut_setup":
+		fallthrough
+	case "exp_setup":
+		fallthrough
+	case "abi":
+		fallthrough
+	case "line":
+		fallthrough
+	case "file":
+		fallthrough
+	case "exit":
+		fallthrough
+	case "battle":
+		fallthrough
+	case "screensh":
+		fallthrough
+	case "slow":
+		fallthrough
+	case "shake":
+		fallthrough
+	case "to_menu":
+		return "", "", nil
 	case "dia":
 		// get the speaker id
 		speakerId, err := strconv.ParseInt(line[:strings.Index(line, " ")], 10, 32)
 
 		if err != nil {
-			fmt.Print(err)
+			fmt.Println(err)
 			return "", "", errors.New("invalid line")
 		}
 
@@ -123,14 +177,13 @@ func parseString(line string) (speakerName string, retLine string, err error) {
 		return "", "", errors.New("invalid line")
 	}
 
-	retLine = "world"
-
 	return speakerName, line, nil
 }
 
 func getSpeaker(speakerId int64) string {
 	switch speakerId {
 	case -1:
+		fallthrough
 	case 0:
 		return ""
 	case 1:
@@ -142,4 +195,5 @@ func getSpeaker(speakerId int64) string {
 	default:
 		return "N/A"
 	}
+	return "N/A"
 }
