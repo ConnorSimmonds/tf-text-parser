@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
@@ -12,8 +10,6 @@ import (
 // Static variables
 var FNT *winc.Font = winc.NewFont("SinsGold", 24, winc.DefaultFont.Style())
 var TXTBOX_IMG string = "assets/spr_dialogue_base.png"
-var TXTBOX *winc.Panel
-var TXT *winc.Label
 
 // Global variables
 var dispMsg string = ""
@@ -24,39 +20,44 @@ func main() {
 	mainWindow.SetSize(1200, 300)
 	mainWindow.SetText("Text Parser")
 
-	TXTBOX := winc.NewPanel(mainWindow)
-	TXTBOX.SetSize(384, 96)
-	TXTBOX.SetPos(16, 24)
+	// Set up textbox
+	txtbox := winc.NewPanel(mainWindow)
+	txtbox.SetSize(384, 96)
+	txtbox.SetPos(16, 24)
 
-	txtBoxImg := winc.NewImageViewBox(TXTBOX)
+	txtBoxImg := winc.NewImageViewBox(txtbox)
 	txtBoxImg.DrawImageFile(TXTBOX_IMG)
-	TXT := winc.NewLabel(TXTBOX)
-	TXT.SetText("hi")
-	TXT.SetSize(374, 76)
-	TXT.SetPos(5, 5)
-	TXT.SetFont(FNT)
+	txt := winc.NewLabel(txtbox)
+	txt.SetText("")
+	txt.SetSize(374, 76)
+	txt.SetPos(5, 5)
+	txt.SetFont(FNT)
 
+	// Set up the speaker label
+	speakerTxt := winc.NewLabel(mainWindow)
+	speakerTxt.SetText("Hello World")
+	speakerTxt.SetSize(128, 32)
+	speakerTxt.SetPos(16, 128)
+
+	// Set up display field and button
 	edt := winc.NewEdit(mainWindow)
 	edt.SetPos(420, 24)
 	edt.SetSize(384, 96)
 	edt.SetText("")
 
 	btn := winc.NewPushButton(mainWindow)
-	btn.SetText("Set Textbox Text")
+	btn.SetText("Display Line")
 	btn.SetPos(420, 130)
 	btn.SetSize(100, 40)
 	btn.OnClick().Bind(func(e *winc.Event) {
-		dispMsg, err := strconv.Unquote("\"" + edt.Text() + "\"")
-		if err != nil {
-			fmt.Print(err)
-			return
-		}
-		TXT.SetText("")
+		dispMsg = formatString(edt.Text())
+		txt.SetText("")
 
 		go func(msg string) {
 			tVar := 0
+
 			for tVar < len(msg) {
-				TXT.SetText(TXT.Text() + string(msg[tVar]))
+				txt.SetText(txt.Text() + string(msg[tVar]))
 				time.Sleep(50 * time.Millisecond)
 				tVar += 1
 			}
