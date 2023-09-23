@@ -195,5 +195,4 @@ func getSpeaker(speakerId int64) string {
 	default:
 		return "N/A"
 	}
-	return "N/A"
 }
