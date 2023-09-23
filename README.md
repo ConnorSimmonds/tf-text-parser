@@ -13,6 +13,10 @@ It's not that great, however it does allow me to easily validate dialogue files.
 - Play through entire dialogue sections and replay lines.
 - Modify lines at will and reinsert them into the file.
 
+## Building
+
+Simply pull and run `go build` to compile this. Everything that's required is provided.
+
 ## License
 
 This project is licensed under the terms of the MIT license.
