@@ -55,7 +55,7 @@ func main() {
 
 	// Set up the speaker label
 	speakerTxt := winc.NewLabel(mainWindow)
-	speakerTxt.SetText("Hello World")
+	speakerTxt.SetText("")
 	speakerTxt.SetSize(128, 32)
 	speakerTxt.SetPos(16, 128)
 
