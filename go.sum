@@ -1,0 +1,4 @@
+github.com/gen2brain/iup-go v3.30.2+incompatible h1:DdXbIpe4rUKFBH7CgBWS3T/73NaOg4ZGN8jED9Ycq+Y=
+github.com/gen2brain/iup-go v3.30.2+incompatible/go.mod h1:eFy2UvTT8zJl98EDKDTtiSP92OoYjjgHj015cy6R+Ak=
+github.com/tadvi/winc v0.0.0-20210907234902-33fdab6e7e58 h1:h0tZ6ToFW9PUGt+145I77PGTeWa75hfJBs1kw9CgMZg=
+github.com/tadvi/winc v0.0.0-20210907234902-33fdab6e7e58/go.mod h1:tNBZi4sduF/C3bQE2wGTIccmErQ4A9M9QkPsICVg+oE=
