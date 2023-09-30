@@ -167,10 +167,14 @@ func main() {
 	nextBtn.OnClick().Bind(func(e *winc.Event) {
 		// get the next line: it's the next item on the selected item list
 		// we also need to see if it's an "exit". if it is, stop playback
+		// if we press next on an "exit" we dont want to do anything
+		if lineList.SelectedItem().Text()[0] == "exit" {
+			return
+		}
+
 		selectedNext := lineList.SelectedIndex() + 1
 		lineList.SetSelectedIndex(selectedNext)
 		tItm := lineList.SelectedItem()
-		fmt.Println(tItm)
 
 		itmCont := tItm.Text()
 
@@ -202,8 +206,6 @@ func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label)
 	dispMsg = formatString(rawLine)
 
 	if textBox.Text() != finalMsg {
-		fmt.Println(textBox.Text())
-		fmt.Println(finalMsg)
 		textboxChannel <- true
 	}
 	<-finishedChannel
