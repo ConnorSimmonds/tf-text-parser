@@ -22,6 +22,7 @@ var dispMsg string = ""
 var textSpeed int = 25
 var msgIndex int = -1
 var dialogueFilePath string = ""
+var textboxChannel = make(chan bool, 2)
 
 type Item struct {
 	T       []string
@@ -73,47 +74,7 @@ func main() {
 	btn.SetPos(128, 130)
 	btn.SetSize(100, 40)
 	btn.OnClick().Bind(func(e *winc.Event) {
-		dispMsg = formatString(edt.Text())
-		txt.SetText("")
-
-		go func(msg string) {
-			// Parse and display the string
-			// The general structure of most lines is dia x line
-			// Dia is the speaker marker.
-			speaker, msg, err := parseString(msg)
-
-			if err != nil {
-				fmt.Print(err)
-				return
-			}
-
-			// it's a recognized command but not a dialogue command
-			if speaker == "" && msg == "" {
-				return
-			}
-
-			speakerTxt.SetText(speaker)
-
-			// Now go and parse/display the rest of the string
-			index := 0
-			textSpeed = 50
-
-			for index < len(msg) {
-				if msg[index] == '[' {
-					// start of a command, we need to parse through it and then apply the effects
-					command := msg[index+1 : strings.Index(msg, "]")]
-					parseCommand(command)
-
-					msg = msg[strings.Index(msg, "]")+1:]
-					index = 0
-				}
-
-				txt.SetText(txt.Text() + string(msg[index]))
-				time.Sleep(time.Duration(textSpeed) * time.Millisecond)
-				index += 1
-			}
-		}(dispMsg)
-
+		displayMessage(edt.Text(), txt, speakerTxt)
 	})
 
 	// Set up the line list for files
@@ -126,6 +87,7 @@ func main() {
 	lineList.AddColumn("Line", 160)
 	lineList.AddColumn("Index", 60)
 	lineList.SetCheckBoxes(false)
+	lineList.EnableSingleSelect(true)
 	lineList.SetPos(640, 0)
 
 	loadBtn := winc.NewPushButton(mainWindow)
@@ -205,6 +167,18 @@ func main() {
 		tItm := lineList.SelectedItem()
 		fmt.Println(tItm)
 
+		itmCont := tItm.Text()
+
+		if itmCont[0] == "exit" {
+			// we've reached the end!
+			return
+		}
+
+		edt.SetText(itmCont[0])
+		msgIndex, _ = strconv.Atoi(itmCont[1])
+
+		// now, do the display code
+		displayMessage(edt.Text(), txt, speakerTxt)
 	})
 
 	mainWindow.Center()
@@ -216,6 +190,57 @@ func main() {
 
 func wndOnClose(arg *winc.Event) {
 	winc.Exit()
+}
+
+// displayMessage sets up everything to be displayed. This is reusable so we can call it from Next.
+func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label) {
+	dispMsg = formatString(rawLine)
+	textBox.SetText("")
+
+	go func(msg string) {
+		// Parse and display the string
+		// The general structure of most lines is dia x line
+		// Dia is the speaker marker.
+		speaker, msg, err := parseString(msg)
+
+		if err != nil {
+			fmt.Print(err)
+			return
+		}
+
+		// it's a recognized command but not a dialogue command
+		if speaker == "" && msg == "" {
+			return
+		}
+
+		speakerBox.SetText(speaker)
+
+		// Now go and parse/display the rest of the string
+		index := 0
+		textSpeed = 50
+
+		for index < len(msg) {
+			// check to see if we've told the goroutine to stop
+			select {
+			case <-textboxChannel:
+				fmt.Println("Stop early")
+				return
+			default:
+				if msg[index] == '[' {
+					// start of a command, we need to parse through it and then apply the effects
+					command := msg[index+1 : strings.Index(msg, "]")]
+					parseCommand(command)
+
+					msg = msg[strings.Index(msg, "]")+1:]
+					index = 0
+				}
+				textBox.SetText(textBox.Text() + string(msg[index]))
+				time.Sleep(time.Duration(textSpeed) * time.Millisecond)
+				index += 1
+			}
+		}
+		textboxChannel <- true
+	}(dispMsg)
 }
 
 // saveDialogueFile takes a list of items from the lineList and saves them to the loaded in file
