@@ -19,9 +19,9 @@ var BASE_SPEED int = 50
 
 // Global variables
 var dispMsg string = ""
-var setMsg string = ""
 var textSpeed int = 25
 var dialogueFile *os.File
+var msgIndex int = -1
 
 type Item struct {
 	T       []string
@@ -137,13 +137,26 @@ func main() {
 	loadBtn.OnClick().Bind(func(e *winc.Event) {
 		if filePath, ok := winc.ShowOpenFileDlg(mainWindow,
 			"Select a dialogue file", "All files (*.*)|*.*", 0, ""); ok {
-
+			lineList.DeleteAllItems()
+			msgIndex = -1
 			itemList := parseDialogueFile(filePath)
 			for _, item := range itemList {
 				lineList.AddItem(item)
 			}
 
 		}
+	})
+
+	// Dialogue list line click logic
+	lineList.OnClick().Bind(func(e *winc.Event) {
+		itm := lineList.SelectedItem()
+		if itm == nil {
+			return
+		}
+
+		itmCont := itm.Text()
+		edt.SetText(itmCont[0])
+		msgIndex, _ = strconv.Atoi(itmCont[1])
 	})
 
 	mainWindow.Center()
