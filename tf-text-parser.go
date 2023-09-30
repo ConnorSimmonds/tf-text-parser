@@ -19,10 +19,12 @@ var BASE_SPEED int = 50
 
 // Global variables
 var dispMsg string = ""
+var finalMsg string = ""
 var textSpeed int = 25
 var msgIndex int = -1
 var dialogueFilePath string = ""
-var textboxChannel = make(chan bool, 2)
+var textboxChannel = make(chan bool, 1)
+var finishedChannel = make(chan bool, 1)
 
 type Item struct {
 	T       []string
@@ -39,6 +41,9 @@ func (item Item) Index() string            { return item.T[1] }
 func (item *Item) SetIndex(index string)   { item.T[1] = index }
 
 func main() {
+	// Preseed the finishedChannel so that we can display a line
+	finishedChannel <- true
+
 	// Main window
 	mainWindow := winc.NewForm(nil)
 	mainWindow.SetSize(960, 460)
@@ -195,13 +200,22 @@ func wndOnClose(arg *winc.Event) {
 // displayMessage sets up everything to be displayed. This is reusable so we can call it from Next.
 func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label) {
 	dispMsg = formatString(rawLine)
+
+	if textBox.Text() != finalMsg {
+		fmt.Println(textBox.Text())
+		fmt.Println(finalMsg)
+		textboxChannel <- true
+	}
+	<-finishedChannel
+
 	textBox.SetText("")
 
-	go func(msg string) {
+	go func(inpMsg string) {
 		// Parse and display the string
 		// The general structure of most lines is dia x line
 		// Dia is the speaker marker.
-		speaker, msg, err := parseString(msg)
+		speaker, msg, err := parseString(inpMsg)
+		finalMsg = msg
 
 		if err != nil {
 			fmt.Print(err)
@@ -219,12 +233,13 @@ func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label)
 		index := 0
 		textSpeed = 50
 
+	displayLoop:
 		for index < len(msg) {
 			// check to see if we've told the goroutine to stop
 			select {
 			case <-textboxChannel:
 				fmt.Println("Stop early")
-				return
+				break displayLoop
 			default:
 				if msg[index] == '[' {
 					// start of a command, we need to parse through it and then apply the effects
@@ -239,7 +254,7 @@ func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label)
 				index += 1
 			}
 		}
-		textboxChannel <- true
+		finishedChannel <- true
 	}(dispMsg)
 }
 
