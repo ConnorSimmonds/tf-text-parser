@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"os"
@@ -33,11 +34,13 @@ func (item *Item) SetText(s string) { item.T[0] = s }
 func (item Item) Checked() bool            { return item.checked }
 func (item *Item) SetChecked(checked bool) { item.checked = checked }
 func (item Item) ImageIndex() int          { return 0 }
+func (item Item) Index() string            { return item.T[1] }
+func (item *Item) SetIndex(index string)   { item.T[1] = index }
 
 func main() {
 	// Main window
 	mainWindow := winc.NewForm(nil)
-	mainWindow.SetSize(1200, 300)
+	mainWindow.SetSize(960, 460)
 	mainWindow.SetText("Text Parser")
 
 	// Set up textbox
@@ -61,13 +64,13 @@ func main() {
 
 	// Set up display field and button
 	edt := winc.NewEdit(mainWindow)
-	edt.SetPos(420, 24)
+	edt.SetPos(16, 172)
 	edt.SetSize(384, 96)
 	edt.SetText("")
 
 	btn := winc.NewPushButton(mainWindow)
 	btn.SetText("Display Line")
-	btn.SetPos(420, 130)
+	btn.SetPos(128, 130)
 	btn.SetSize(100, 40)
 	btn.OnClick().Bind(func(e *winc.Event) {
 		dispMsg = formatString(edt.Text())
@@ -114,14 +117,19 @@ func main() {
 	})
 
 	// Set up the line list for files
+	conversationList := winc.NewListView(mainWindow)
+	conversationList.AddColumn("Conversation", 160)
+	conversationList.SetCheckBoxes(false)
+	conversationList.SetPos(420, 0)
+
 	lineList := winc.NewListView(mainWindow)
 	lineList.AddColumn("Line", 160)
 	lineList.AddColumn("Index", 60)
 	lineList.SetCheckBoxes(false)
-	lineList.SetPos(820, 0)
+	lineList.SetPos(640, 0)
 
 	loadBtn := winc.NewPushButton(mainWindow)
-	loadBtn.SetPos(720, 200)
+	loadBtn.SetPos(256, 130)
 	loadBtn.SetSize(100, 40)
 	loadBtn.SetText("Load Dialogue File")
 
@@ -151,8 +159,32 @@ func wndOnClose(arg *winc.Event) {
 
 // parseDialogueFile parses in a dialogue file and returns an array of items to be
 // added into the ListView
-func parseDialogueFile(filePath string) (itemArray []Item) {
-	itemArray = nil
+func parseDialogueFile(filePath string) []*Item {
+	var itemArray []*Item
+
+	// parse the file in
+	file, err := os.Open(filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	defer file.Close()
+
+	dialogueScanner := bufio.NewScanner(file)
+	index := -1
+
+	// go through the file and add each line into the item
+	for dialogueScanner.Scan() {
+		index += 1
+		txt := dialogueScanner.Text()
+
+		if strings.Index(txt, "dia") != 0 && strings.Index(txt, "exit") != 0 {
+			continue
+		}
+		itm := &Item{[]string{txt, strconv.Itoa(index)}, true}
+		itemArray = append(itemArray, itm)
+
+	}
 
 	return itemArray
 }
