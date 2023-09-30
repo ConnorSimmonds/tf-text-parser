@@ -129,7 +129,7 @@ func main() {
 	lineList.SetPos(640, 0)
 
 	loadBtn := winc.NewPushButton(mainWindow)
-	loadBtn.SetPos(256, 280)
+	loadBtn.SetPos(164, 280)
 	loadBtn.SetSize(100, 40)
 	loadBtn.SetText("Load Dialogue File")
 
@@ -139,7 +139,7 @@ func main() {
 	saveBtn.SetText("Save Dialogue File")
 
 	saveLineBtn := winc.NewPushButton(mainWindow)
-	saveLineBtn.SetPos(256, 130)
+	saveLineBtn.SetPos(264, 280)
 	saveLineBtn.SetSize(100, 40)
 	saveLineBtn.SetText("Save Dialogue Line")
 
@@ -189,6 +189,22 @@ func main() {
 		itmCont := itm.Text()
 		edt.SetText(itmCont[0])
 		msgIndex, _ = strconv.Atoi(itmCont[1])
+	})
+
+	// Next Button Logic; this basically gets the next line and hits display
+	nextBtn := winc.NewPushButton(mainWindow)
+	nextBtn.SetPos(256, 130)
+	nextBtn.SetSize(60, 40)
+	nextBtn.SetText("Next")
+
+	nextBtn.OnClick().Bind(func(e *winc.Event) {
+		// get the next line: it's the next item on the selected item list
+		// we also need to see if it's an "exit". if it is, stop playback
+		selectedNext := lineList.SelectedIndex() + 1
+		lineList.SetSelectedIndex(selectedNext)
+		tItm := lineList.SelectedItem()
+		fmt.Println(tItm)
+
 	})
 
 	mainWindow.Center()
