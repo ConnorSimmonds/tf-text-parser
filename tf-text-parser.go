@@ -20,8 +20,8 @@ var BASE_SPEED int = 50
 // Global variables
 var dispMsg string = ""
 var textSpeed int = 25
-var dialogueFile *os.File
 var msgIndex int = -1
+var dialogueFilePath string = ""
 
 type Item struct {
 	T       []string
@@ -129,9 +129,19 @@ func main() {
 	lineList.SetPos(640, 0)
 
 	loadBtn := winc.NewPushButton(mainWindow)
-	loadBtn.SetPos(256, 130)
+	loadBtn.SetPos(256, 280)
 	loadBtn.SetSize(100, 40)
 	loadBtn.SetText("Load Dialogue File")
+
+	saveBtn := winc.NewPushButton(mainWindow)
+	saveBtn.SetPos(64, 280)
+	saveBtn.SetSize(100, 40)
+	saveBtn.SetText("Save Dialogue File")
+
+	saveLineBtn := winc.NewPushButton(mainWindow)
+	saveLineBtn.SetPos(256, 130)
+	saveLineBtn.SetSize(100, 40)
+	saveLineBtn.SetText("Save Dialogue Line")
 
 	// Dialogue file load logic
 	loadBtn.OnClick().Bind(func(e *winc.Event) {
@@ -143,8 +153,12 @@ func main() {
 			for _, item := range itemList {
 				lineList.AddItem(item)
 			}
-
+			dialogueFilePath = filePath
 		}
+	})
+
+	saveBtn.OnClick().Bind(func(e *winc.Event) {
+
 	})
 
 	// Dialogue list line click logic
@@ -168,6 +182,40 @@ func main() {
 
 func wndOnClose(arg *winc.Event) {
 	winc.Exit()
+}
+
+// saveDialogueFile takes a list of items from the lineList and saves them to the loaded in file
+// Right now this doesn't support adding in extra lines.
+func saveDialogueFile(diaList []*Item) {
+	if dialogueFilePath == "" {
+		return
+	}
+
+	// parse the file in
+	fileString, err := os.ReadFile(dialogueFilePath)
+	if err != nil {
+		panic(err)
+	}
+
+	baseFileLines := strings.Split(string(fileString), "\n")
+
+	// TODO: how do we handle new lines added in? We don't have this functionality right now, but I'd like to add it in as a way to have an AIO tool
+	for _, diaItem := range diaList {
+		ind, _ := strconv.Atoi(diaItem.Text()[1])
+		line := diaItem.Text()[0]
+
+		if !diaItem.checked {
+			continue
+		}
+
+		baseFileLines[ind] = line
+	}
+
+	output := strings.Join(baseFileLines, "\n")
+	err = os.WriteFile(dialogueFilePath, []byte(output), 0644)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // parseDialogueFile parses in a dialogue file and returns an array of items to be
@@ -194,7 +242,7 @@ func parseDialogueFile(filePath string) []*Item {
 		if strings.Index(txt, "dia") != 0 && strings.Index(txt, "exit") != 0 {
 			continue
 		}
-		itm := &Item{[]string{txt, strconv.Itoa(index)}, true}
+		itm := &Item{[]string{txt, strconv.Itoa(index)}, false}
 		itemArray = append(itemArray, itm)
 
 	}
