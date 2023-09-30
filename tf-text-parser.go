@@ -157,15 +157,23 @@ func main() {
 		}
 	})
 
+	// Save dialogue file (new)
 	saveBtn.OnClick().Bind(func(e *winc.Event) {
+		itemList := lineList.Items()
+		var structList []Item
 
+		for _, item := range itemList {
+			var tItem = item.(*Item)
+			structList = append(structList, *tItem)
+		}
+
+		saveDialogueFile(structList)
 	})
 
 	// Line replacement
 	saveLineBtn.OnClick().Bind(func(e *winc.Event) {
 		oldItm := lineList.SelectedItem()
 		itm := &Item{[]string{edt.Text(), oldItm.Text()[1]}, true}
-		fmt.Println(itm)
 		lineList.InsertItem(itm, lineList.SelectedIndex())
 		lineList.DeleteItem(oldItm)
 		lineList.SetSelectedItem(itm)
@@ -196,7 +204,7 @@ func wndOnClose(arg *winc.Event) {
 
 // saveDialogueFile takes a list of items from the lineList and saves them to the loaded in file
 // Right now this doesn't support adding in extra lines.
-func saveDialogueFile(diaList []*Item) {
+func saveDialogueFile(diaList []Item) {
 	if dialogueFilePath == "" {
 		return
 	}
