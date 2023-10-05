@@ -240,7 +240,6 @@ func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label)
 			// check to see if we've told the goroutine to stop
 			select {
 			case <-textboxChannel:
-				fmt.Println("Stop early")
 				break displayLoop
 			default:
 				if msg[index] == '[' {
@@ -315,9 +314,6 @@ func parseDialogueFile(filePath string) []*Item {
 		index += 1
 		txt := dialogueScanner.Text()
 
-		if strings.Index(txt, "dia") != 0 && strings.Index(txt, "exit") != 0 {
-			continue
-		}
 		itm := &Item{[]string{txt, strconv.Itoa(index)}, false}
 		itemArray = append(itemArray, itm)
 
