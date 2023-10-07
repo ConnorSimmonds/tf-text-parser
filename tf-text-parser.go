@@ -591,7 +591,6 @@ func fixLineListIndexes(list *winc.ListView) {
 	for index < list.ItemCount() {
 		list.SetSelectedIndex(index)
 		item := list.SelectedItem().(*Item)
-		fmt.Print(index)
 		item.SetIndex(strconv.Itoa(index))
 		list.UpdateItem(item)
 		index += 1
