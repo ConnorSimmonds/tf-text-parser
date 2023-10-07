@@ -145,12 +145,13 @@ func main() {
 
 	// Save dialogue file (new)
 	saveBtn.OnClick().Bind(func(e *winc.Event) {
-		itemList := lineList.Items()
-		var structList []Item
+		itemList := conversationList.Items()
+		structList := make([]ConvItem, conversationList.ItemCount())
 
 		for _, item := range itemList {
-			var tItem = item.(*Item)
-			structList = append(structList, *tItem)
+			var tItem = item.(*ConvItem)
+			index, _ := strconv.Atoi(tItem.Text()[0])
+			structList[index] = *tItem
 		}
 
 		saveDialogueFile(structList)
@@ -211,6 +212,7 @@ func main() {
 		// we also need to see if it's an "exit". if it is, stop playback
 		// if we press next on an "exit" we dont want to do anything
 		if lineList.SelectedItem().Text()[0] == "exit" {
+			lineList.SetSelectedIndex(0)
 			return
 		}
 
@@ -222,6 +224,7 @@ func main() {
 
 		if itmCont[0] == "exit" {
 			// we've reached the end!
+			lineList.SetSelectedIndex(0)
 			return
 		}
 
@@ -319,33 +322,34 @@ func displayMessage(rawLine string, textBox *winc.Label, speakerBox *winc.Label)
 
 // saveDialogueFile takes a list of items from the lineList and saves them to the loaded in file
 // Right now this doesn't support adding in extra lines.
-func saveDialogueFile(diaList []Item) {
+func saveDialogueFile(convList []ConvItem) {
 	if dialogueFilePath == "" {
 		return
 	}
 
 	// parse the file in
-	fileString, err := os.ReadFile(dialogueFilePath)
+	/*fileString, err := os.ReadFile(dialogueFilePath)
 	if err != nil {
 		panic(err)
-	}
+	}*/
 
-	baseFileLines := strings.Split(string(fileString), "\n")
+	//baseFileLines := strings.Split(string(fileString), "\n")
+
+	var newFile []string
 
 	// TODO: how do we handle new lines added in? We don't have this functionality right now, but I'd like to add it in as a way to have an AIO tool
-	for _, diaItem := range diaList {
-		ind, _ := strconv.Atoi(diaItem.Text()[1])
-		line := diaItem.Text()[0]
-
-		if !diaItem.checked {
-			continue
+	for _, convItem := range convList {
+		convos := convItem.Conversation()
+		for _, diaItem := range convos {
+			//ind, _ := strconv.Atoi(diaItem.Text()[1])
+			line := diaItem.Text()[0]
+			newFile = append(newFile, line)
 		}
 
-		baseFileLines[ind] = line
 	}
 
-	output := strings.Join(baseFileLines, "\n")
-	err = os.WriteFile(dialogueFilePath, []byte(output), 0644)
+	output := strings.Join(newFile, "\n")
+	err := os.WriteFile(dialogueFilePath, []byte(output), 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -378,7 +382,7 @@ func parseDialogueFile(filePath string) []*ConvItem {
 		itemArray = append(itemArray, itm)
 
 		if txt == "exit" {
-			convItem := &ConvItem{[]string{strconv.Itoa(index)}, false, itemArray}
+			convItem := &ConvItem{[]string{strconv.Itoa(convIndex)}, false, itemArray}
 			convIndex += 1
 			convArray = append(convArray, convItem)
 			itemArray = []*Item{}
