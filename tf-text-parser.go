@@ -271,7 +271,20 @@ func main() {
 	upLineBtn.SetSize(40, 40)
 	upLineBtn.SetText("^")
 	upLineBtn.OnClick().Bind(func(e *winc.Event) {
-		// move the current line up
+		if lineList.SelectedIndex() <= 0 {
+			return
+		}
+
+		// move the current line down
+		tItem := lineList.SelectedItem().(*Item)
+		newIndex, _ := strconv.Atoi(tItem.Index())
+		tItem.SetIndex(strconv.Itoa(newIndex - 2))
+		insertIndex := lineList.SelectedIndex() - 1
+		lineList.DeleteItem(lineList.SelectedItem())
+		lineList.InsertItem(tItem, insertIndex)
+		lineList.SetSelectedIndex(insertIndex)
+		// correct the indexes
+		fixLineListIndexes(lineList)
 	})
 
 	downLineBtn := winc.NewPushButton(mainWindow)
@@ -280,6 +293,10 @@ func main() {
 	downLineBtn.SetText("v")
 	downLineBtn.OnClick().Bind(func(e *winc.Event) {
 		// move the current line down
+		if lineList.SelectedIndex() >= lineList.ItemCount() {
+			return
+		}
+
 		tItem := lineList.SelectedItem().(*Item)
 		newIndex, _ := strconv.Atoi(tItem.Index())
 		tItem.SetIndex(strconv.Itoa(newIndex + 2))
