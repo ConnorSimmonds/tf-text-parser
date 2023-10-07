@@ -121,17 +121,6 @@ func main() {
 	loadBtn.SetPos(164, 280)
 	loadBtn.SetSize(100, 40)
 	loadBtn.SetText("Load Dialogue File")
-
-	saveBtn := winc.NewPushButton(mainWindow)
-	saveBtn.SetPos(64, 280)
-	saveBtn.SetSize(100, 40)
-	saveBtn.SetText("Save Dialogue File")
-
-	saveLineBtn := winc.NewPushButton(mainWindow)
-	saveLineBtn.SetPos(264, 280)
-	saveLineBtn.SetSize(100, 40)
-	saveLineBtn.SetText("Save Dialogue Line")
-
 	// Dialogue file load logic
 	loadBtn.OnClick().Bind(func(e *winc.Event) {
 		if filePath, ok := winc.ShowOpenFileDlg(mainWindow,
@@ -146,6 +135,30 @@ func main() {
 		}
 	})
 
+	saveBtn := winc.NewPushButton(mainWindow)
+	saveBtn.SetPos(64, 280)
+	saveBtn.SetSize(100, 40)
+	saveBtn.SetText("Save Dialogue File")
+
+	saveConvBtn := winc.NewPushButton(mainWindow)
+	saveConvBtn.SetPos(264, 280)
+	saveConvBtn.SetSize(100, 40)
+	saveConvBtn.SetText("Save Conversation")
+	saveConvBtn.OnClick().Bind(func(e *winc.Event) {
+		convItem := conversationList.SelectedItem().(*ConvItem)
+		lineArray := make([]*Item, lineList.ItemCount())
+
+		for _, line := range lineList.Items() {
+			lineItem := line.(*Item)
+			lineIndex, _ := strconv.Atoi(lineItem.Index())
+			lineArray[lineIndex] = lineItem
+		}
+
+		convItem.SetConversation(lineArray)
+		conversationList.InsertItem(convItem, conversationList.SelectedIndex())
+		conversationList.DeleteItem(conversationList.SelectedItem())
+	})
+
 	// Save dialogue file (new)
 	saveBtn.OnClick().Bind(func(e *winc.Event) {
 		itemList := conversationList.Items()
@@ -158,15 +171,6 @@ func main() {
 		}
 
 		saveDialogueFile(structList)
-	})
-
-	// Line replacement
-	saveLineBtn.OnClick().Bind(func(e *winc.Event) {
-		oldItm := lineList.SelectedItem()
-		itm := &Item{[]string{edt.Text(), oldItm.Text()[1]}, true}
-		lineList.InsertItem(itm, lineList.SelectedIndex())
-		lineList.DeleteItem(oldItm)
-		lineList.SetSelectedItem(itm)
 	})
 
 	// Dialogue list line click logic
@@ -247,30 +251,56 @@ func main() {
 	addLineBtn.SetPos(64, 320)
 	addLineBtn.SetSize(100, 40)
 	addLineBtn.SetText("Add Line")
+	addLineBtn.OnClick().Bind(func(e *winc.Event) {
+		// adds a new line
+	})
 
 	removeLineBtn := winc.NewPushButton(mainWindow)
 	removeLineBtn.SetPos(164, 320)
 	removeLineBtn.SetSize(100, 40)
 	removeLineBtn.SetText("Remove Line")
+	removeLineBtn.OnClick().Bind(func(e *winc.Event) {
+		//removes a line
+		lineList.DeleteItem(lineList.SelectedItem())
+		// correct the indexes
+		fixLineListIndexes(lineList)
+	})
 
-	saveConvBtn := winc.NewPushButton(mainWindow)
-	saveConvBtn.SetPos(264, 320)
-	saveConvBtn.SetSize(100, 40)
-	saveConvBtn.SetText("Save Conversation")
+	upLineBtn := winc.NewPushButton(mainWindow)
+	upLineBtn.SetPos(24, 300)
+	upLineBtn.SetSize(40, 40)
+	upLineBtn.SetText("^")
+	upLineBtn.OnClick().Bind(func(e *winc.Event) {
+		// move the current line up
+	})
 
-	saveConvBtn.OnClick().Bind(func(e *winc.Event) {
-		convItem := conversationList.SelectedItem().(*ConvItem)
-		lineArray := make([]*Item, lineList.ItemCount())
+	downLineBtn := winc.NewPushButton(mainWindow)
+	downLineBtn.SetPos(24, 340)
+	downLineBtn.SetSize(40, 40)
+	downLineBtn.SetText("v")
+	downLineBtn.OnClick().Bind(func(e *winc.Event) {
+		// move the current line down
+		tItem := lineList.SelectedItem().(*Item)
+		newIndex, _ := strconv.Atoi(tItem.Index())
+		tItem.SetIndex(strconv.Itoa(newIndex + 2))
+		insertIndex := lineList.SelectedIndex() + 1
+		lineList.DeleteItem(lineList.SelectedItem())
+		lineList.InsertItem(tItem, insertIndex)
+		lineList.SetSelectedIndex(insertIndex)
+		// correct the indexes
+		fixLineListIndexes(lineList)
+	})
 
-		for _, line := range lineList.Items() {
-			lineItem := line.(*Item)
-			lineIndex, _ := strconv.Atoi(lineItem.Index())
-			lineArray[lineIndex] = lineItem
-		}
-
-		convItem.SetConversation(lineArray)
-		conversationList.InsertItem(convItem, conversationList.SelectedIndex())
-		conversationList.DeleteItem(conversationList.SelectedItem())
+	// Line replacement
+	saveLineBtn := winc.NewPushButton(mainWindow)
+	saveLineBtn.SetPos(264, 320)
+	saveLineBtn.SetSize(100, 40)
+	saveLineBtn.SetText("Save Dialogue Line")
+	saveLineBtn.OnClick().Bind(func(e *winc.Event) {
+		itm := lineList.SelectedItem().(*Item)
+		itm.SetChecked(true)
+		itm.SetText(edt.Text())
+		lineList.UpdateItem(itm)
 	})
 
 	mainWindow.Center()
@@ -349,17 +379,8 @@ func saveDialogueFile(convList []ConvItem) {
 		return
 	}
 
-	// parse the file in
-	/*fileString, err := os.ReadFile(dialogueFilePath)
-	if err != nil {
-		panic(err)
-	}*/
-
-	//baseFileLines := strings.Split(string(fileString), "\n")
-
 	var newFile []string
 
-	// TODO: how do we handle new lines added in? We don't have this functionality right now, but I'd like to add it in as a way to have an AIO tool
 	for _, convItem := range convList {
 		convos := convItem.Conversation()
 		for _, diaItem := range convos {
@@ -544,4 +565,19 @@ func parseCommand(commandString string) {
 		fmt.Println(command + ":" + value)
 		break
 	}
+}
+
+func fixLineListIndexes(list *winc.ListView) {
+	// goes through the list and fixes up the indexes
+	index := 0
+	oldSelect := list.SelectedIndex()
+	for index < list.ItemCount() {
+		list.SetSelectedIndex(index)
+		item := list.SelectedItem().(*Item)
+		fmt.Print(index)
+		item.SetIndex(strconv.Itoa(index))
+		list.UpdateItem(item)
+		index += 1
+	}
+	list.SetSelectedIndex(oldSelect)
 }
