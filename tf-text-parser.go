@@ -26,6 +26,7 @@ var dialogueFilePath string = ""
 var textboxChannel = make(chan bool, 1)
 var finishedChannel = make(chan bool, 1)
 
+// Item Functions
 type Item struct {
 	T       []string
 	checked bool
@@ -39,6 +40,24 @@ func (item *Item) SetChecked(checked bool) { item.checked = checked }
 func (item Item) ImageIndex() int          { return 0 }
 func (item Item) Index() string            { return item.T[1] }
 func (item *Item) SetIndex(index string)   { item.T[1] = index }
+
+// ConvItem Functions
+type ConvItem struct {
+	T       []string
+	checked bool
+	conv    []*Item
+}
+
+func (item ConvItem) Text() []string    { return item.T }
+func (item *ConvItem) SetText(s string) { item.T[0] = s }
+
+func (item ConvItem) Checked() bool                 { return item.checked }
+func (item *ConvItem) SetChecked(checked bool)      { item.checked = checked }
+func (item ConvItem) ImageIndex() int               { return 0 }
+func (item ConvItem) Index() string                 { return item.T[1] }
+func (item *ConvItem) SetIndex(index string)        { item.T[1] = index }
+func (item ConvItem) Conversation() []*Item         { return item.conv }
+func (item *ConvItem) SetConversation(conv []*Item) { item.conv = conv }
 
 func main() {
 	// Preseed the finishedChannel so that we can display a line
@@ -118,7 +137,7 @@ func main() {
 			msgIndex = -1
 			itemList := parseDialogueFile(filePath)
 			for _, item := range itemList {
-				lineList.AddItem(item)
+				conversationList.AddItem(item)
 			}
 			dialogueFilePath = filePath
 		}
@@ -158,6 +177,29 @@ func main() {
 		msgIndex, _ = strconv.Atoi(itmCont[1])
 	})
 
+	// Conversation list line click logic
+	conversationList.OnClick().Bind(func(e *winc.Event) {
+		itm := conversationList.SelectedItem()
+		if itm == nil {
+			return
+		}
+
+		fmt.Print(itm)
+
+		var convItem = itm.(*ConvItem)
+		lineList.DeleteAllItems()
+		for _, itm := range convItem.Conversation() {
+			lineList.AddItem(itm)
+		}
+
+		lineList.SetSelectedIndex(0)
+		lineItm := lineList.SelectedItem().(*Item)
+		itmCont := lineItm.Text()
+		edt.SetText(itmCont[0])
+
+		msgIndex, _ = strconv.Atoi(itmCont[1])
+	})
+
 	// Next Button Logic; this basically gets the next line and hits display
 	nextBtn := winc.NewPushButton(mainWindow)
 	nextBtn.SetPos(256, 130)
@@ -189,6 +231,22 @@ func main() {
 		// now, do the display code
 		displayMessage(edt.Text(), txt, speakerTxt)
 	})
+
+	// delete/add line buttons
+	addLineBtn := winc.NewPushButton(mainWindow)
+	addLineBtn.SetPos(64, 320)
+	addLineBtn.SetSize(100, 40)
+	addLineBtn.SetText("Add Line")
+
+	removeLineBtn := winc.NewPushButton(mainWindow)
+	removeLineBtn.SetPos(164, 320)
+	removeLineBtn.SetSize(100, 40)
+	removeLineBtn.SetText("Remove Line")
+
+	saveConvBtn := winc.NewPushButton(mainWindow)
+	saveConvBtn.SetPos(264, 320)
+	saveConvBtn.SetSize(100, 40)
+	saveConvBtn.SetText("Save Conversation")
 
 	mainWindow.Center()
 	mainWindow.Show()
@@ -295,8 +353,9 @@ func saveDialogueFile(diaList []Item) {
 
 // parseDialogueFile parses in a dialogue file and returns an array of items to be
 // added into the ListView
-func parseDialogueFile(filePath string) []*Item {
+func parseDialogueFile(filePath string) []*ConvItem {
 	var itemArray []*Item
+	var convArray []*ConvItem
 
 	// parse the file in
 	file, err := os.Open(filePath)
@@ -308,6 +367,7 @@ func parseDialogueFile(filePath string) []*Item {
 
 	dialogueScanner := bufio.NewScanner(file)
 	index := -1
+	convIndex := 0
 
 	// go through the file and add each line into the item
 	for dialogueScanner.Scan() {
@@ -317,9 +377,16 @@ func parseDialogueFile(filePath string) []*Item {
 		itm := &Item{[]string{txt, strconv.Itoa(index)}, false}
 		itemArray = append(itemArray, itm)
 
+		if txt == "exit" {
+			convItem := &ConvItem{[]string{strconv.Itoa(index)}, false, itemArray}
+			convIndex += 1
+			convArray = append(convArray, convItem)
+			itemArray = []*Item{}
+			index = -1
+		}
 	}
 
-	return itemArray
+	return convArray
 }
 
 /*
