@@ -259,7 +259,18 @@ func main() {
 	saveConvBtn.SetText("Save Conversation")
 
 	saveConvBtn.OnClick().Bind(func(e *winc.Event) {
+		convItem := conversationList.SelectedItem().(*ConvItem)
+		lineArray := make([]*Item, lineList.ItemCount())
 
+		for _, line := range lineList.Items() {
+			lineItem := line.(*Item)
+			lineIndex, _ := strconv.Atoi(lineItem.Index())
+			lineArray[lineIndex] = lineItem
+		}
+
+		convItem.SetConversation(lineArray)
+		conversationList.InsertItem(convItem, conversationList.SelectedIndex())
+		conversationList.DeleteItem(conversationList.SelectedItem())
 	})
 
 	mainWindow.Center()
