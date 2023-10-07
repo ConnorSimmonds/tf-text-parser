@@ -98,6 +98,9 @@ func main() {
 	btn.SetPos(128, 130)
 	btn.SetSize(100, 40)
 	btn.OnClick().Bind(func(e *winc.Event) {
+		if strings.Index(edt.Text(), "dia") != 0 {
+			return
+		}
 		displayMessage(edt.Text(), txt, speakerTxt)
 	})
 
@@ -185,8 +188,6 @@ func main() {
 			return
 		}
 
-		fmt.Print(itm)
-
 		var convItem = itm.(*ConvItem)
 		lineList.DeleteAllItems()
 		for _, itm := range convItem.Conversation() {
@@ -216,20 +217,26 @@ func main() {
 			return
 		}
 
-		selectedNext := lineList.SelectedIndex() + 1
-		lineList.SetSelectedIndex(selectedNext)
-		tItm := lineList.SelectedItem()
+		for true {
+			selectedNext := lineList.SelectedIndex() + 1
+			lineList.SetSelectedIndex(selectedNext)
+			tItm := lineList.SelectedItem()
+			itmCont := tItm.Text()
 
-		itmCont := tItm.Text()
+			if itmCont[0] == "exit" {
+				// we've reached the end!
+				lineList.SetSelectedIndex(0)
+				tItm := lineList.SelectedItem()
+				itmCont = tItm.Text()
+			}
 
-		if itmCont[0] == "exit" {
-			// we've reached the end!
-			lineList.SetSelectedIndex(0)
-			return
+			// check to see if this is a dialogue line, if not, get the next line....
+			if strings.Index(itmCont[0], "dia") == 0 {
+				edt.SetText(itmCont[0])
+				msgIndex, _ = strconv.Atoi(itmCont[1])
+				break
+			}
 		}
-
-		edt.SetText(itmCont[0])
-		msgIndex, _ = strconv.Atoi(itmCont[1])
 
 		// now, do the display code
 		displayMessage(edt.Text(), txt, speakerTxt)
@@ -250,6 +257,10 @@ func main() {
 	saveConvBtn.SetPos(264, 320)
 	saveConvBtn.SetSize(100, 40)
 	saveConvBtn.SetText("Save Conversation")
+
+	saveConvBtn.OnClick().Bind(func(e *winc.Event) {
+
+	})
 
 	mainWindow.Center()
 	mainWindow.Show()
