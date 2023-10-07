@@ -155,8 +155,7 @@ func main() {
 		}
 
 		convItem.SetConversation(lineArray)
-		conversationList.InsertItem(convItem, conversationList.SelectedIndex())
-		conversationList.DeleteItem(conversationList.SelectedItem())
+		conversationList.UpdateItem(convItem)
 	})
 
 	// Save dialogue file (new)
@@ -253,6 +252,9 @@ func main() {
 	addLineBtn.SetText("Add Line")
 	addLineBtn.OnClick().Bind(func(e *winc.Event) {
 		// adds a new line
+		itm := &Item{[]string{"dia -1 ", "0"}, false}
+		lineList.InsertItem(itm, lineList.SelectedIndex()+1)
+		fixLineListIndexes(lineList)
 	})
 
 	removeLineBtn := winc.NewPushButton(mainWindow)
@@ -409,6 +411,7 @@ func saveDialogueFile(convList []ConvItem) {
 	}
 
 	output := strings.Join(newFile, "\n")
+	fmt.Println(output)
 	err := os.WriteFile(dialogueFilePath, []byte(output), 0644)
 	if err != nil {
 		panic(err)
